@@ -38,6 +38,9 @@ public class Student {
         this.email = email;
     }
 
+    public boolean isEmpty() {
+        return id == 0 && name == null && email == null;
+    }
     @Override
     public String toString() {
         return "Student{" +

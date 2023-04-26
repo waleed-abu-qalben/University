@@ -33,11 +33,11 @@ public class StudentController extends HttpServlet {
         String pathInfo = request.getPathInfo();
 
         if(pathInfo.equals("/getAll")) {
-            getAllStudents(request, response);
+            getAllStudents(response);
         } else if (pathInfo.equals("/showSchedule")){
             try {
                 showStudentSchedule(request, response);
-            } catch (SQLException e) {
+            } catch (SQLException | IOException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -69,6 +69,7 @@ public class StudentController extends HttpServlet {
 
     protected void doDelete(HttpServletRequest request, HttpServletResponse response)  {
         String idParameter = request.getParameter("id");
+
         int stdId = Integer.parseInt(idParameter);
         try {
             studentsDao.delete(stdId);
@@ -78,8 +79,7 @@ public class StudentController extends HttpServlet {
             throw new RuntimeException(e);
         }
     }
-    private void getAllStudents(HttpServletRequest request,
-                                HttpServletResponse response) {
+    private void getAllStudents(HttpServletResponse response) {
         try {
             List<Student> studentList = studentsDao.getAll();
             String studentsJson = gson.toJson(studentList);
@@ -96,8 +96,16 @@ public class StudentController extends HttpServlet {
     }
 
     private void showStudentSchedule(HttpServletRequest request,
-                                     HttpServletResponse response) throws SQLException {
+                                     HttpServletResponse response) throws SQLException, IOException {
         String idParameter = request.getParameter("id");
+        if (idParameter == null) {
+            LOGGER.error("Missing student (id) parameter");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setContentType("text/plain");
+            response.getWriter().write("Error: Missing id parameter");
+
+        } else {
+
         int stdId = Integer.parseInt(idParameter);
         try{
             List<StudentSchedule> studentSchedules = coursesDao.getStudentSchedule(stdId);
@@ -109,6 +117,9 @@ public class StudentController extends HttpServlet {
             throw new RuntimeException(e.getMessage());
         } catch (IOException e) {
             throw new RuntimeException(e);
+
+         }
+
         }
     }
 

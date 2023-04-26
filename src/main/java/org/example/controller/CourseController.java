@@ -60,6 +60,7 @@ public class CourseController  extends HttpServlet {
                                                         "and the duration of the course must be 1 Hour");
 
 
+
         } else if (!isTeacherAvailable(teacher_id,start_time, end_time)) {
             LOGGER.error("Teacher not available in this period of time -> " +start_time+" - "+end_time);
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -81,12 +82,36 @@ public class CourseController  extends HttpServlet {
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException {
         BufferedReader reader = request.getReader();
         Course course = gson.fromJson(reader, Course.class);
-        try {
-            coursesDao.update(course);
-            LOGGER.info("Update course successfully: "+course);
-        } catch (SQLException e) {
-            LOGGER.error(e.getMessage());
-            throw new RuntimeException(e.getMessage());
+        LOGGER.info("Course to be Updated: "+course);
+
+        Time start_time = course.getStart_time();
+        Time end_time = course.getEnd_time();
+        int teacher_id = course.getTeacherId();
+        if(!isValidTime(start_time, end_time)) {
+            LOGGER.error("Invalid Time, (start time) must be less than (end time)" +
+                    "and the duration of the course must be 1 Hour");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setContentType("text/plain");
+            response.getWriter().write("Invalid Time, (start time) must be less than (end time) " +
+                    "and the duration of the course must be 1 Hour");
+
+
+
+        } else if (!isTeacherAvailable(teacher_id,start_time, end_time)) {
+            LOGGER.error("Teacher not available in this period of time -> " +start_time+" - "+end_time);
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setContentType("text/plain");
+            response.getWriter().write("Teacher not available in this period of time -> "+start_time+" - "+end_time);
+
+        } else {
+
+            try {
+                coursesDao.update(course);
+                LOGGER.info("Update course successfully: " + course);
+            } catch (SQLException e) {
+                LOGGER.error(e.getMessage());
+                throw new RuntimeException(e.getMessage());
+            }
         }
     }
 

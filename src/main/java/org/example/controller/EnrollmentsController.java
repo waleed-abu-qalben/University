@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import org.apache.log4j.Logger;
 import org.example.dao.CoursesDao;
 import org.example.dao.EnrollmentsDao;
+import org.example.dao.StudentsDao;
 import org.example.model.Course;
 import org.example.model.Enrollment;
 import org.example.model.StudentSchedule;
@@ -24,11 +25,13 @@ public class EnrollmentsController extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(EnrollmentsController.class.getName());
     private CoursesDao coursesDao;
     private EnrollmentsDao enrollmentsDao;
+    private StudentsDao studentsDao;
     private Gson gson;
 
     public void init() {
         enrollmentsDao = new EnrollmentsDao();
         coursesDao = new CoursesDao();
+        studentsDao = new StudentsDao();
         gson = new GsonBuilder().create();
     }
 
@@ -54,7 +57,14 @@ public class EnrollmentsController extends HttpServlet {
         int course_id = enrollment.getCourse_id();
         try {
             Course course = coursesDao.getCourseById(course_id);
-            if(course.isEmpty()) {
+
+            if (! studentsDao.isExist(student_id)) {
+                LOGGER.error("The student with ID " + student_id + " could not be found.");
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                response.setContentType("text/plain");
+                response.getWriter().write("The student with ID " + student_id + " could not be found.");
+
+            } else if(course.isEmpty()) {
                 LOGGER.error("The course with ID " + course_id + " could not be found.");
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 response.setContentType("text/plain");

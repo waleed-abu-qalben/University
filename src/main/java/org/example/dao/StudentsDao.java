@@ -13,6 +13,7 @@ public class StudentsDao {
     private final String INSERT_STUDENT_QUERY = "INSERT INTO students (name, email) VALUES (?, ?)";
     private final String UPDATE_STUDENT_QUERY = "UPDATE students SET name=?, email=? WHERE id=?";
     private final String DELETE_STUDENT_QUERY = "DELETE FROM students WHERE id=?";
+    private final String GET_STUDENT_BY_ID = "SELECT * FROM students WHERE id =?";
 
     public StudentsDao() {
         try {
@@ -87,6 +88,7 @@ public class StudentsDao {
         }
         return true;
     }
+
 
 }
 
