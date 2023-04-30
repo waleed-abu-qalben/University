@@ -71,6 +71,9 @@ public class CourseController  extends HttpServlet {
             try {
                 coursesDao.add(course);
                 LOGGER.info("Insert Course successfully: " + course);
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.setContentType("text/plain");
+                response.getWriter().write("Insert Course successfully: " + course);
             } catch (SQLException e) {
                 LOGGER.error(e.getMessage());
                 throw new RuntimeException();
@@ -78,7 +81,7 @@ public class CourseController  extends HttpServlet {
         }
     }
 
-    //TODO -> find a way for validation reusability.
+
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException {
         BufferedReader reader = request.getReader();
         Course course = gson.fromJson(reader, Course.class);
@@ -97,7 +100,7 @@ public class CourseController  extends HttpServlet {
 
 
 
-        } else if (!isTeacherAvailable(teacher_id,start_time, end_time)) {
+        } if (!isTeacherAvailable(teacher_id,start_time, end_time)) {
             LOGGER.error("Teacher not available in this period of time -> " +start_time+" - "+end_time);
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.setContentType("text/plain");
@@ -108,6 +111,9 @@ public class CourseController  extends HttpServlet {
             try {
                 coursesDao.update(course);
                 LOGGER.info("Update course successfully: " + course);
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.setContentType("text/plain");
+                response.getWriter().write("Update Course successfully: " + course);
             } catch (SQLException e) {
                 LOGGER.error(e.getMessage());
                 throw new RuntimeException(e.getMessage());
@@ -115,16 +121,24 @@ public class CourseController  extends HttpServlet {
         }
     }
 
-    protected void doDelete(HttpServletRequest request, HttpServletResponse response)  {
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         String idParameter = request.getParameter("id");
-        int courseId = Integer.parseInt(idParameter);
-        try {
-            coursesDao.delete(courseId);
-            LOGGER.info("Delete course with id: "+courseId);
-        } catch (SQLException e) {
-            LOGGER.error(e.getMessage());
-            throw new RuntimeException(e);
+        if (idParameter == null) {
+            LOGGER.error("Missing Course (id) parameter");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setContentType("text/plain");
+            response.getWriter().write("Error: Missing id parameter");
+        }
+        else {
+            int courseId = Integer.parseInt(idParameter);
+            try {
+                coursesDao.delete(courseId);
+                LOGGER.info("Delete course with id: " + courseId);
+            } catch (SQLException e) {
+                LOGGER.error(e.getMessage());
+                throw new RuntimeException(e);
+            }
         }
     }
 

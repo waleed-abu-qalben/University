@@ -67,17 +67,40 @@ public class StudentController extends HttpServlet {
         }
     }
 
-    protected void doDelete(HttpServletRequest request, HttpServletResponse response)  {
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String idParameter = request.getParameter("id");
+        if (idParameter == null) {
+            LOGGER.error("Missing student (id) parameter");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setContentType("text/plain");
+            response.getWriter().write("Error: Missing id parameter");
 
-        int stdId = Integer.parseInt(idParameter);
-        try {
-            studentsDao.delete(stdId);
-            LOGGER.info("Delete student with id: "+stdId);
-        } catch (SQLException e) {
-            LOGGER.error(e.getMessage());
-            throw new RuntimeException(e);
         }
+        else {
+            int stdId = Integer.parseInt(idParameter);
+            try {
+                Student student = studentsDao.getStudentById(stdId);
+
+                if(student.isEmpty()) {
+                    LOGGER.error("Student with id: "+stdId+" not found");
+                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                    response.setContentType("text/plain");
+                    response.getWriter().write("Student with id: "+stdId+" not found");
+                }
+                else {
+                    studentsDao.delete(stdId);
+                    LOGGER.info("Delete student with id: " + stdId);
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.setContentType("text/plain");
+                    response.getWriter().write("Delete student with id: " + stdId);
+                }
+            } catch (SQLException e) {
+                LOGGER.error(e.getMessage());
+                throw new RuntimeException(e);
+            }
+        }
+
+
     }
     private void getAllStudents(HttpServletResponse response) {
         try {

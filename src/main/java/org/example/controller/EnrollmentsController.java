@@ -8,6 +8,7 @@ import org.example.dao.EnrollmentsDao;
 import org.example.dao.StudentsDao;
 import org.example.model.Course;
 import org.example.model.Enrollment;
+import org.example.model.Student;
 import org.example.model.StudentSchedule;
 
 import javax.servlet.annotation.WebServlet;
@@ -57,34 +58,38 @@ public class EnrollmentsController extends HttpServlet {
         int course_id = enrollment.getCourse_id();
         try {
             Course course = coursesDao.getCourseById(course_id);
+            Student student = studentsDao.getStudentById(student_id);
 
-            if (! studentsDao.isExist(student_id)) {
+            if (student.isEmpty()) {
                 LOGGER.error("The student with ID " + student_id + " could not be found.");
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 response.setContentType("text/plain");
-                response.getWriter().write("The student with ID " + student_id + " could not be found.");
+                response.getWriter().write("The student with ID " + student_id + " could not be found.\n");
 
-            } else if(course.isEmpty()) {
+            } if(course.isEmpty()) {
                 LOGGER.error("The course with ID " + course_id + " could not be found.");
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 response.setContentType("text/plain");
-                response.getWriter().write("The course with ID " + course_id + " could not be found.");
+                response.getWriter().write("The course with ID " + course_id + " could not be found.\n");
 
             } else if(isCourseFull(course_id)) {
                 LOGGER.error("This course with id "+course_id+" is full, can't register any new student in it");
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 response.setContentType("text/plain");
-                response.getWriter().write("This course is full, can't register any new student in it");
+                response.getWriter().write("This course is full, can't register any new student in it\n");
 
             } else if ( !isStudentAvailable(student_id,course.getStart_time(), course.getEnd_time()) ) {
                 LOGGER.error("Student with id " +student_id+" not available in this period of time -> " +course.getStart_time()+" - "+course.getEnd_time());
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 response.setContentType("text/plain");
-                response.getWriter().write("Student with id " +student_id+" not available in this period of time -> " +course.getStart_time()+" - "+course.getEnd_time());
+                response.getWriter().write("Student with id " +student_id+" not available in this period of time -> " +course.getStart_time()+" - "+course.getEnd_time()+"\n");
             }
             else {
                 enrollmentsDao.registerStudentToCourse(enrollment);
-                LOGGER.info("Register Student with id "+student_id+" to course with id "+ course_id+" Done..");
+                LOGGER.info("Register Student with id "+student_id+" to course with id "+ course_id+" Done successful");
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.setContentType("text/plain");
+                response.getWriter().write("Register Student with id "+student_id+" to course with id "+ course_id+" Done successful\n");
             }
 
         } catch (SQLException e){
@@ -99,9 +104,26 @@ public class EnrollmentsController extends HttpServlet {
         Enrollment enrollment = gson.fromJson(reader, Enrollment.class);
 
         try {
-            enrollmentsDao.delete(enrollment);
-            LOGGER.info("Delete enrollment: student_id: "+enrollment.getStudent_id()+
-                         " course_id: "+enrollment.getCourse_id());
+            Student student = studentsDao.getStudentById(enrollment.getStudent_id());
+            Course course = coursesDao.getCourseById(enrollment.getCourse_id());
+            if(student.isEmpty()) {
+                LOGGER.error("The student with ID " + student.getId() + " could not be found.");
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                response.setContentType("text/plain");
+                response.getWriter().write("The student with ID " + student.getId() + " could not be found.\n");
+            }
+            if (course.isEmpty()) {
+                LOGGER.error("The course with ID " + course.getId() + " could not be found.");
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                response.setContentType("text/plain");
+                response.getWriter().write("The course with ID " + course.getId() + " could not be found.\n");
+            }
+
+            else {
+                enrollmentsDao.delete(enrollment);
+                LOGGER.info("Delete enrollment: student_id: " + enrollment.getStudent_id() +
+                        " course_id: " + enrollment.getCourse_id());
+            }
         } catch (SQLException e) {
             LOGGER.error(e.getMessage());
             throw new RuntimeException(e);

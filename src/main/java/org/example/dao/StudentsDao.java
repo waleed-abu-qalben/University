@@ -1,6 +1,7 @@
 package org.example.dao;
 
-import org.example.config.UniversityDataSource;
+import org.apache.log4j.Logger;
+import org.example.config.ConnectionManager;
 import org.example.model.Student;
 
 import javax.sql.DataSource;
@@ -8,7 +9,8 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 public class StudentsDao {
-    private DataSource dataSource;
+    private static final Logger LOGGER = Logger.getLogger(StudentsDao.class.getName());
+    private ConnectionManager dataSource;
     private final String GET_ALL_STUDENTS_QUERY = "SELECT * FROM students";
     private final String INSERT_STUDENT_QUERY = "INSERT INTO students (name, email) VALUES (?, ?)";
     private final String UPDATE_STUDENT_QUERY = "UPDATE students SET name=?, email=? WHERE id=?";
@@ -17,7 +19,7 @@ public class StudentsDao {
 
     public StudentsDao() {
         try {
-            dataSource = UniversityDataSource.getDataSource();
+            dataSource = ConnectionManager.getInstance();
         } catch (SQLException e) {
             System.err.println(e.getMessage());
         }
@@ -77,16 +79,23 @@ public class StudentsDao {
             }
         }
     }
-    public boolean  isExist (int id) throws SQLException {
+
+    public Student getStudentById(int student_id) throws SQLException {
+        Student student = new Student();
         try (Connection conn = dataSource.getConnection()) {
-            PreparedStatement statement = conn.prepareStatement("SELECT id FROM students WHERE id =?;");
-            statement.setInt(1, id);
+            PreparedStatement statement = conn.prepareCall(GET_STUDENT_BY_ID);
+            statement.setInt(1, student_id);
             ResultSet rs = statement.executeQuery();
-            if(rs.wasNull()) {
-                return false;
+            if(rs.next()) {
+               student.setId(rs.getInt("id"));
+               student.setEmail(rs.getString("email"));
+               student.setName(rs.getString("name"));
+            } else {
+                LOGGER.error("No Student found with id: "+student_id);
             }
+
         }
-        return true;
+        return student;
     }
 
 

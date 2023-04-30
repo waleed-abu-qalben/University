@@ -1,9 +1,10 @@
 package org.example.dao;
 
 import org.apache.log4j.Logger;
-import org.example.config.UniversityDataSource;
+import org.example.config.ConnectionManager;
 import org.example.model.Enrollment;
 
+import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,11 +20,13 @@ public class EnrollmentsDao {
     private final String DELETE_ENROLLMENT_QUERY = "DELETE FROM enrollments WHERE student_id=? AND course_id =?";
     private final String GET_NUMBER_OF_STUDENTS_IN_COURSE_QUERY = "SELECT COUNT(course_id) count FROM enrollments WHERE course_id = ?;";
     //private final String GET_ALL_START_END_TIME_FOR_STUDENT = "SELECT start_ "
-    private DataSource dataSource;
+
+    @Resource()
+    private ConnectionManager dataSource;
     private CoursesDao coursesDao;
     public EnrollmentsDao () {
         try {
-            dataSource = UniversityDataSource.getDataSource();
+            dataSource = ConnectionManager.getInstance();
             coursesDao = new CoursesDao();
         } catch (SQLException e) {
             System.err.println(e.getMessage());
@@ -76,6 +79,7 @@ public class EnrollmentsDao {
       To know the number of students registered in a particular course.
     */
     public int getNumberOfStudentsInCourse(int course_id) throws SQLException {
+
         try (Connection conn = dataSource.getConnection()) {
             PreparedStatement statement = conn.prepareStatement(GET_NUMBER_OF_STUDENTS_IN_COURSE_QUERY);
             statement.setInt(1, course_id);

@@ -1,6 +1,6 @@
 package org.example.dao;
 
-import org.example.config.UniversityDataSource;
+import org.example.config.ConnectionManager;
 import org.example.model.Teacher;
 
 import javax.sql.DataSource;
@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TeachersDao {
-    private DataSource dataSource;
+    private ConnectionManager dataSource;
     private final String GET_ALL_TEACHERS_QUERY = "SELECT * FROM teachers";
     private final String INSERT_TEACHER_QUERY = "INSERT INTO teachers (name, email) VALUES (?, ?)";
     private final String UPDATE_TEACHER_QUERY = "UPDATE teachers SET name=?, email=? WHERE id=?";
@@ -17,7 +17,7 @@ public class TeachersDao {
 
     public TeachersDao() {
         try {
-            dataSource = UniversityDataSource.getDataSource();
+            dataSource = ConnectionManager.getInstance();
         } catch (SQLException e) {
             System.err.println(e.getMessage());
         }

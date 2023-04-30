@@ -1,7 +1,7 @@
 package org.example.dao;
 
 import org.apache.log4j.Logger;
-import org.example.config.UniversityDataSource;
+import org.example.config.ConnectionManager;
 import org.example.model.Course;
 import org.example.model.StudentSchedule;
 
@@ -12,7 +12,7 @@ import java.util.List;
 
 public class CoursesDao {
     private static final Logger LOGGER = Logger.getLogger(CoursesDao.class.getName());
-    private DataSource dataSource;
+    private ConnectionManager dataSource;
     private final String GET_ALL_COURSES_QUERY = "SELECT * FROM courses;";
     private final String INSERT_COURSE_QUERY = "INSERT INTO courses (name, teacher_id, max_size, start_time, end_time) VALUES (?, ?, ?, ?, ?);";
     private final String UPDATE_COURSE_QUERY = "UPDATE courses SET name=?," +
@@ -29,7 +29,7 @@ public class CoursesDao {
 
     public CoursesDao () {
         try {
-            dataSource = UniversityDataSource.getDataSource();
+            dataSource = ConnectionManager.getInstance();
         } catch (SQLException e) {
             System.err.println(e.getMessage());
         }
@@ -142,7 +142,6 @@ public class CoursesDao {
                 course.setEnd_time(rs.getTime("end_time"));
             } else {
                 LOGGER.error("No course found with id: "+course_id);
-                throw new RuntimeException("No course found with id: "+course_id);
             }
 
         }
