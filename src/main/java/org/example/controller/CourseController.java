@@ -19,7 +19,7 @@ import java.time.LocalTime;
 import java.util.List;
 
 
-@WebServlet(urlPatterns = "/course")
+@WebServlet(urlPatterns = "/University/course")
 public class CourseController  extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(CourseController.class.getName());
     private CoursesDao coursesDao;

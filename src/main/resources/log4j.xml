@@ -2,7 +2,7 @@
 <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
 <log4j:configuration>
     <appender name="file" class="org.apache.log4j.RollingFileAppender">
-        <param name="File" value="logs/myapp.log"/>
+        <param name="File" value="logs/university.log"/>
         <param name="Threshold" value="TRACE"/>
         <param name="MaxFileSize" value="10MB"/>
         <layout class="org.apache.log4j.PatternLayout">
@@ -10,7 +10,7 @@
         </layout>
     </appender>
 
-    <logger name="com.example.myapp">
+    <logger name="com.example.University">
         <level value="TRACE"/>
         <appender-ref ref="file"/>
     </logger>

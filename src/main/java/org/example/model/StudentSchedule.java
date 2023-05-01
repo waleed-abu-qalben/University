@@ -5,6 +5,7 @@ import java.sql.Time;
 public class StudentSchedule {
     String CourseName;
     Time startTime;
+    Time endTime;
 
     public String getCourseName() {
         return CourseName;
@@ -30,6 +31,5 @@ public class StudentSchedule {
         this.endTime = endTime;
     }
 
-    Time endTime;
 
 }
