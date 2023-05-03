@@ -15,7 +15,9 @@ public class CustomGson {
 
     private static DateFormat timeFormat = new SimpleDateFormat("HH:mm");
 
-    private CustomGson () {}
+    private CustomGson() {
+    }
+
     public static Gson getGson() {
         if (gson == null) {
             gson = new GsonBuilder()

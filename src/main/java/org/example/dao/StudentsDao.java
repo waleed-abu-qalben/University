@@ -8,6 +8,7 @@ import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+
 public class StudentsDao {
     private static final Logger LOGGER = Logger.getLogger(StudentsDao.class.getName());
     private ConnectionManager dataSource;
@@ -24,7 +25,8 @@ public class StudentsDao {
             System.err.println(e.getMessage());
         }
     }
-    public List<Student> getAll () throws SQLException {
+
+    public List<Student> getAll() throws SQLException {
         List<Student> studentList = new ArrayList<>();
         try (Connection conn = dataSource.getConnection()) {
             PreparedStatement statement = conn.prepareCall(GET_ALL_STUDENTS_QUERY);
@@ -42,6 +44,7 @@ public class StudentsDao {
         return studentList;
 
     }
+
     public void add(Student student) throws SQLException {
         try (Connection conn = dataSource.getConnection()) {
 
@@ -69,6 +72,7 @@ public class StudentsDao {
 
         }
     }
+
     public void delete(int id) throws SQLException {
         try (Connection conn = dataSource.getConnection()) {
             PreparedStatement statement = conn.prepareStatement(DELETE_STUDENT_QUERY);
@@ -86,12 +90,12 @@ public class StudentsDao {
             PreparedStatement statement = conn.prepareCall(GET_STUDENT_BY_ID);
             statement.setInt(1, student_id);
             ResultSet rs = statement.executeQuery();
-            if(rs.next()) {
-               student.setId(rs.getInt("id"));
-               student.setEmail(rs.getString("email"));
-               student.setName(rs.getString("name"));
+            if (rs.next()) {
+                student.setId(rs.getInt("id"));
+                student.setEmail(rs.getString("email"));
+                student.setName(rs.getString("name"));
             } else {
-                LOGGER.error("No Student found with id: "+student_id);
+                LOGGER.error("No Student found with id: " + student_id);
             }
 
         }

@@ -20,15 +20,17 @@ public class EnrollmentsDao {
     private final String GET_NUMBER_OF_STUDENTS_IN_COURSE_QUERY = "SELECT COUNT(course_id) count FROM enrollments WHERE course_id = ?;";
 
     private ConnectionManager dataSource;
-    public EnrollmentsDao () {
+
+    public EnrollmentsDao() {
         try {
             dataSource = ConnectionManager.getInstance();
         } catch (SQLException e) {
             System.err.println(e.getMessage());
         }
     }
+
     public List<Enrollment> getAll() throws SQLException {
-        List <Enrollment> enrollmentList = new ArrayList<>();
+        List<Enrollment> enrollmentList = new ArrayList<>();
         try (Connection conn = dataSource.getConnection()) {
             PreparedStatement statement = conn.prepareCall(GET_ALL_ENROLLMENTS_QUERY);
             ResultSet rs = statement.executeQuery();
@@ -40,8 +42,9 @@ public class EnrollmentsDao {
             }
 
         }
-        return  enrollmentList;
+        return enrollmentList;
     }
+
     public void delete(Enrollment enrollment) throws SQLException {
         try (Connection conn = dataSource.getConnection()) {
             int student_id = enrollment.getStudent_id();
@@ -55,7 +58,8 @@ public class EnrollmentsDao {
             }
         }
     }
-    public void registerStudentToCourse (Enrollment enrollment) throws SQLException {
+
+    public void registerStudentToCourse(Enrollment enrollment) throws SQLException {
 
         try (Connection conn = dataSource.getConnection()) {
             int std_id = enrollment.getStudent_id();
@@ -80,11 +84,11 @@ public class EnrollmentsDao {
             PreparedStatement statement = conn.prepareStatement(GET_NUMBER_OF_STUDENTS_IN_COURSE_QUERY);
             statement.setInt(1, course_id);
             ResultSet rs = statement.executeQuery();
-            if(rs.next()) {
+            if (rs.next()) {
                 return rs.getInt("count");
             } else {
-                LOGGER.error("No course found with id: "+course_id);
-                throw new RuntimeException("No course found with id: "+course_id);
+                LOGGER.error("No course found with id: " + course_id);
+                throw new RuntimeException("No course found with id: " + course_id);
             }
 
         }
@@ -92,7 +96,7 @@ public class EnrollmentsDao {
     }
 
 
-    }
+}
 
 
 

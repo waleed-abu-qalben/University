@@ -7,6 +7,9 @@ import org.example.dao.CoursesDao;
 import org.example.dao.StudentsDao;
 import org.example.model.Student;
 import org.example.model.StudentSchedule;
+import org.example.util.MessageGenerator;
+import org.example.util.Writer;
+import org.example.util.Role;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -17,24 +20,31 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
+import static javax.servlet.http.HttpServletResponse.*;
+import static org.example.util.Writer.JSON_CONTENT;
+import static org.example.util.Writer.TEXT_CONTENT;
+import static org.example.util.Role.STUDENT;
+
 @WebServlet(urlPatterns = "/student/*")
 public class StudentController extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(StudentController.class.getName());
     private StudentsDao studentsDao;
     private CoursesDao coursesDao;
-    private  Gson gson;
+    private Gson gson;
+
     public void init() {
         studentsDao = new StudentsDao();
         coursesDao = new CoursesDao();
         gson = CustomGson.getGson();
     }
+
     protected void doGet(HttpServletRequest request,
-                         HttpServletResponse response)  {
+                         HttpServletResponse response) {
         String pathInfo = request.getPathInfo();
 
-        if(pathInfo.equals("/getAll")) {
+        if (pathInfo.equals("/getAll")) {
             getAllStudents(response);
-        } else if (pathInfo.equals("/showSchedule")){
+        } else if (pathInfo.equals("/showSchedule")) {
             try {
                 showStudentSchedule(request, response);
             } catch (SQLException | IOException e) {
@@ -43,24 +53,32 @@ public class StudentController extends HttpServlet {
         }
 
     }
+
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         BufferedReader reader = request.getReader();
         Student student = gson.fromJson(reader, Student.class);
 
         try {
             studentsDao.add(student);
-            LOGGER.info("Add student: "+student);
+            LOGGER.info(MessageGenerator.insertedSuccessfully(STUDENT, student.toString()));
+            Writer.write(response, SC_OK, TEXT_CONTENT,
+                    MessageGenerator.insertedSuccessfully(STUDENT, student.toString()));
         } catch (SQLException e) {
             LOGGER.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }
+
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException {
         BufferedReader reader = request.getReader();
         Student student = gson.fromJson(reader, Student.class);
         try {
             studentsDao.update(student);
-            LOGGER.info("Update student: "+student);
+            LOGGER.info(MessageGenerator.updatedSuccessfully(STUDENT, student.toString()));
+            LOGGER.info(MessageGenerator.insertedSuccessfully(STUDENT, student.toString()));
+            Writer.write(response, SC_OK, TEXT_CONTENT,
+                    MessageGenerator.updatedSuccessfully(STUDENT, student.toString()));
+
         } catch (SQLException e) {
             LOGGER.error(e.getMessage());
             throw new RuntimeException(e);
@@ -70,29 +88,24 @@ public class StudentController extends HttpServlet {
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String idParameter = request.getParameter("id");
         if (idParameter == null) {
-            LOGGER.error("Missing student (id) parameter");
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.setContentType("text/plain");
-            response.getWriter().write("Error: Missing id parameter");
+            LOGGER.error(MessageGenerator.missingIdParameter(STUDENT));
+            Writer.write(response, SC_BAD_REQUEST, TEXT_CONTENT, MessageGenerator.missingIdParameter(STUDENT));
 
-        }
-        else {
-            int stdId = Integer.parseInt(idParameter);
+        } else {
+            int student_id = Integer.parseInt(idParameter);
             try {
-                Student student = studentsDao.getStudentById(stdId);
+                Student student = studentsDao.getStudentById(student_id);
 
-                if(student.isEmpty()) {
-                    LOGGER.error("Student with id: "+stdId+" not found");
-                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                    response.setContentType("text/plain");
-                    response.getWriter().write("Student with id: "+stdId+" not found");
-                }
-                else {
-                    studentsDao.delete(stdId);
-                    LOGGER.info("Delete student with id: " + stdId);
-                    response.setStatus(HttpServletResponse.SC_OK);
-                    response.setContentType("text/plain");
-                    response.getWriter().write("Delete student with id: " + stdId);
+                if (student.isEmpty()) {
+                    LOGGER.error(MessageGenerator.notFound(Role.STUDENT, student_id));
+                    Writer.write(response, SC_NOT_FOUND,
+                            TEXT_CONTENT,
+                            MessageGenerator.notFound(Role.STUDENT, student_id));
+                } else {
+                    studentsDao.delete(student_id);
+                    LOGGER.info(MessageGenerator.deletedSuccessfully(STUDENT, student_id));
+                    Writer.write(response, SC_OK, TEXT_CONTENT, MessageGenerator.deletedSuccessfully(STUDENT, student_id));
+
                 }
             } catch (SQLException e) {
                 LOGGER.error(e.getMessage());
@@ -102,13 +115,13 @@ public class StudentController extends HttpServlet {
 
 
     }
+
     private void getAllStudents(HttpServletResponse response) {
         try {
             List<Student> studentList = studentsDao.getAll();
             String studentsJson = gson.toJson(studentList);
-            response.setContentType("application/json");
-            LOGGER.info("Gel all students: "+studentsJson);
-            response.getWriter().write(studentsJson);
+            LOGGER.info("Gel all students: " + studentsJson);
+            Writer.write(response, SC_OK, JSON_CONTENT, studentsJson);
 
         } catch (SQLException e) {
             LOGGER.error(e.getMessage());
@@ -123,25 +136,23 @@ public class StudentController extends HttpServlet {
         String idParameter = request.getParameter("id");
         if (idParameter == null) {
             LOGGER.error("Missing student (id) parameter");
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.setContentType("text/plain");
-            response.getWriter().write("Error: Missing id parameter");
+            Writer.write(response, SC_BAD_REQUEST, TEXT_CONTENT, MessageGenerator.missingIdParameter(STUDENT));
 
         } else {
 
-        int stdId = Integer.parseInt(idParameter);
-        try{
-            List<StudentSchedule> studentSchedules = coursesDao.getStudentSchedule(stdId);
-            String json = gson.toJson(studentSchedules);
-            response.setContentType("application/json");
-            LOGGER.info("Show student schedule with id "+stdId+"-> "+json);
-            response.getWriter().write(json);
-        }catch (SQLException e) {
-            throw new RuntimeException(e.getMessage());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            int stdId = Integer.parseInt(idParameter);
+            try {
+                List<StudentSchedule> studentSchedules = coursesDao.getStudentSchedule(stdId);
+                String json = gson.toJson(studentSchedules);
+                String msg = "Show student schedule with id " + stdId + "-> " + json;
+                LOGGER.info(msg);
+                Writer.write(response, SC_OK, JSON_CONTENT, json);
+            } catch (SQLException e) {
+                throw new RuntimeException(e.getMessage());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
 
-         }
+            }
 
         }
     }

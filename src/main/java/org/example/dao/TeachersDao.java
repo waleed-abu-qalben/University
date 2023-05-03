@@ -22,7 +22,8 @@ public class TeachersDao {
             System.err.println(e.getMessage());
         }
     }
-    public List<Teacher> getAll () throws SQLException {
+
+    public List<Teacher> getAll() throws SQLException {
         List<Teacher> teacherList = new ArrayList<>();
         try (Connection conn = dataSource.getConnection()) {
             PreparedStatement statement = conn.prepareCall(GET_ALL_TEACHERS_QUERY);
@@ -68,6 +69,7 @@ public class TeachersDao {
 
         }
     }
+
     public void delete(int id) throws SQLException {
         try (Connection conn = dataSource.getConnection()) {
             PreparedStatement statement = conn.prepareStatement(DELETE_TEACHER_QUERY);
@@ -78,18 +80,18 @@ public class TeachersDao {
             }
         }
     }
-    public boolean  isExist (int id) throws SQLException {
+
+    public boolean isExist(int id) throws SQLException {
         try (Connection conn = dataSource.getConnection()) {
             PreparedStatement statement = conn.prepareStatement("SELECT id FROM teacher WHERE id =?;");
             statement.setInt(1, id);
             ResultSet rs = statement.executeQuery();
-            if(rs.wasNull()) {
+            if (rs.wasNull()) {
                 return false;
             }
         }
         return true;
     }
-
 
 
 }

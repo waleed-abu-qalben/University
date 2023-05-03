@@ -10,6 +10,9 @@ import org.example.model.Course;
 import org.example.model.Enrollment;
 import org.example.model.Student;
 import org.example.model.StudentSchedule;
+import org.example.util.MessageGenerator;
+import org.example.util.Writer;
+import org.example.util.Role;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -20,6 +23,11 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.util.List;
+
+import static javax.servlet.http.HttpServletResponse.*;
+import static org.example.util.Writer.TEXT_CONTENT;
+import static org.example.util.Role.COURSE;
+import static org.example.util.Role.STUDENT;
 
 
 @WebServlet(urlPatterns = "/enrollment")
@@ -42,11 +50,12 @@ public class EnrollmentsController extends HttpServlet {
         try {
             List<Enrollment> enrollmentList = enrollmentsDao.getAll();
             String enrollmentsJson = gson.toJson(enrollmentList);
-            response.setContentType("application/json");
-            LOGGER.info("Get all enrollments: "+enrollmentsJson);
-            response.getWriter().write(enrollmentsJson);
+            LOGGER.info("Get all enrollments: " + enrollmentsJson);
 
-        } catch (SQLException e ) {
+            Writer.write(response, SC_OK,
+                    Writer.JSON_CONTENT, enrollmentsJson);
+
+        } catch (SQLException e) {
             LOGGER.error(e.getMessage());
             throw new RuntimeException();
         }
@@ -62,38 +71,37 @@ public class EnrollmentsController extends HttpServlet {
             Student student = studentsDao.getStudentById(student_id);
 
             if (student.isEmpty()) {
-                LOGGER.error("The student with ID " + student_id + " could not be found.");
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                response.setContentType("text/plain");
-                response.getWriter().write("The student with ID " + student_id + " could not be found.\n");
+                LOGGER.error(MessageGenerator.notFound(STUDENT, student_id));
+                Writer.write(response, SC_NOT_FOUND,
+                        TEXT_CONTENT,
+                        MessageGenerator.notFound(STUDENT, student_id));
 
-            } if(course.isEmpty()) {
-                LOGGER.error("The course with ID " + course_id + " could not be found.");
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                response.setContentType("text/plain");
-                response.getWriter().write("The course with ID " + course_id + " could not be found.\n");
-
-            } else if(isCourseFull(course_id)) {
-                LOGGER.error("This course with id "+course_id+" is full, can't register any new student in it");
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.setContentType("text/plain");
-                response.getWriter().write("This course is full, can't register any new student in it\n");
-
-            } else if ( !isStudentAvailable(student_id,course.getStart_time(), course.getEnd_time()) ) {
-                LOGGER.error("Student with id " +student_id+" not available in this period of time -> " +course.getStart_time()+" - "+course.getEnd_time());
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.setContentType("text/plain");
-                response.getWriter().write("Student with id " +student_id+" not available in this period of time -> " +course.getStart_time()+" - "+course.getEnd_time()+"\n");
             }
-            else {
+            if (course.isEmpty()) {
+                LOGGER.error(MessageGenerator.notFound(COURSE, course_id));
+                Writer.write(response, SC_NOT_FOUND,
+                        TEXT_CONTENT,
+                        MessageGenerator.notFound(COURSE, course_id));
+
+            } else if (isCourseFull(course_id)) {
+                LOGGER.error(MessageGenerator.courseFull(course_id));
+                Writer.write(response, SC_BAD_REQUEST, TEXT_CONTENT, MessageGenerator.courseFull(course_id));
+
+
+            } else if (!isStudentAvailable(student_id, course.getStart_time(), course.getEnd_time())) {
+                Time start = course.getStart_time();
+                Time endTime = course.getEnd_time();
+                LOGGER.error(MessageGenerator.notAvailable(STUDENT, start, endTime));
+                Writer.write(response, SC_BAD_REQUEST, TEXT_CONTENT, MessageGenerator.notAvailable(STUDENT, start, endTime));
+
+            } else {
                 enrollmentsDao.registerStudentToCourse(enrollment);
-                LOGGER.info("Register Student with id "+student_id+" to course with id "+ course_id+" Done successful");
-                response.setStatus(HttpServletResponse.SC_OK);
-                response.setContentType("text/plain");
-                response.getWriter().write("Register Student with id "+student_id+" to course with id "+ course_id+" Done successful\n");
+                LOGGER.info(MessageGenerator.registeredSuccessfully(student_id, course_id));
+                Writer.write(response, SC_OK, TEXT_CONTENT,
+                        MessageGenerator.registeredSuccessfully(student_id, course_id));
             }
 
-        } catch (SQLException e){
+        } catch (SQLException e) {
             LOGGER.error(e.getMessage());
             throw new RuntimeException(e.getMessage());
         }
@@ -107,23 +115,21 @@ public class EnrollmentsController extends HttpServlet {
         try {
             Student student = studentsDao.getStudentById(enrollment.getStudent_id());
             Course course = coursesDao.getCourseById(enrollment.getCourse_id());
-            if(student.isEmpty()) {
-                LOGGER.error("The student with ID " + student.getId() + " could not be found.");
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                response.setContentType("text/plain");
-                response.getWriter().write("The student with ID " + student.getId() + " could not be found.\n");
+            if (student.isEmpty()) {
+                LOGGER.error(MessageGenerator.notFound(STUDENT, enrollment.getStudent_id()));
+                Writer.write(response, SC_NOT_FOUND,
+                        TEXT_CONTENT,
+                        MessageGenerator.notFound(STUDENT, enrollment.getStudent_id()));
+
             }
             if (course.isEmpty()) {
-                LOGGER.error("The course with ID " + course.getId() + " could not be found.");
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                response.setContentType("text/plain");
-                response.getWriter().write("The course with ID " + course.getId() + " could not be found.\n");
-            }
-
-            else {
+                LOGGER.error(MessageGenerator.notFound(COURSE, enrollment.getCourse_id()));
+                Writer.write(response, SC_NOT_FOUND,
+                        TEXT_CONTENT,
+                        MessageGenerator.notFound(COURSE, enrollment.getCourse_id()));
+            } else {
                 enrollmentsDao.delete(enrollment);
-                LOGGER.info("Delete enrollment: student_id: " + enrollment.getStudent_id() +
-                        " course_id: " + enrollment.getCourse_id());
+                LOGGER.info(MessageGenerator.deletedSuccessfully(Role.ENROLLMENT, enrollment.getStudent_id(), enrollment.getCourse_id()));
             }
         } catch (SQLException e) {
             LOGGER.error(e.getMessage());
@@ -133,21 +139,21 @@ public class EnrollmentsController extends HttpServlet {
 
     private boolean isCourseFull(int course_id) throws SQLException {
         int numberOfStudents = enrollmentsDao.getNumberOfStudentsInCourse(course_id);
-        int courseMaxSize =  coursesDao.getCourseMaxSize(course_id);
+        int courseMaxSize = coursesDao.getCourseMaxSize(course_id);
         return numberOfStudents == courseMaxSize;
 
     }
 
     private boolean isStudentAvailable(int student_id, Time start_time, Time end_time) throws SQLException {
-       List<StudentSchedule> studentSchedule = coursesDao.getStudentSchedule(student_id);
-       for (StudentSchedule schedule : studentSchedule) {
+        List<StudentSchedule> studentSchedule = coursesDao.getStudentSchedule(student_id);
+        for (StudentSchedule schedule : studentSchedule) {
             boolean isEqualsStartTime = start_time.compareTo(schedule.getStartTime()) == 0;
             boolean isEqualsEndTime = end_time.compareTo(schedule.getEndTime()) == 0;
-            if( isEqualsEndTime || isEqualsStartTime ) {
+            if (isEqualsEndTime || isEqualsStartTime) {
                 return false;
             }
-       }
-       return true;
+        }
+        return true;
     }
 
 

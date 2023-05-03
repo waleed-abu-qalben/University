@@ -16,8 +16,8 @@ public class CoursesDao {
     private final String GET_ALL_COURSES_QUERY = "SELECT * FROM courses;";
     private final String INSERT_COURSE_QUERY = "INSERT INTO courses (name, teacher_id, max_size, start_time, end_time) VALUES (?, ?, ?, ?, ?);";
     private final String UPDATE_COURSE_QUERY = "UPDATE courses SET name=?," +
-                                                         "teacher_id=?, max_size=?, " +
-                                                          " start_time=?, end_time=? WHERE id=?";
+            "teacher_id=?, max_size=?, " +
+            " start_time=?, end_time=? WHERE id=?";
     private final String DELETE_COURSE_QUERY = "DELETE FROM courses WHERE id=?";
     private final String GET_COURSE_MAX_SIZE = "SELECT max_size FROM courses WHERE id=?;";
     private final String GET_ALL_COURSES_BY_TEACHER_ID = "SELECT * FROM courses WHERE teacher_id =?;";
@@ -27,7 +27,7 @@ public class CoursesDao {
             " from enrollments e where e.student_id = ?);";
 
 
-    public CoursesDao () {
+    public CoursesDao() {
         try {
             dataSource = ConnectionManager.getInstance();
         } catch (SQLException e) {
@@ -35,6 +35,7 @@ public class CoursesDao {
         }
 
     }
+
     public List<Course> getAll() throws SQLException {
         List<Course> courseList = new ArrayList<>();
         try (Connection conn = dataSource.getConnection()) {
@@ -90,6 +91,7 @@ public class CoursesDao {
 
         }
     }
+
     public void delete(int id) throws SQLException {
         try (Connection conn = dataSource.getConnection()) {
             PreparedStatement statement = conn.prepareStatement(DELETE_COURSE_QUERY);
@@ -133,7 +135,7 @@ public class CoursesDao {
             PreparedStatement statement = conn.prepareCall(GET_COURSE_BY_ID);
             statement.setInt(1, course_id);
             ResultSet rs = statement.executeQuery();
-            if(rs.next()) {
+            if (rs.next()) {
                 course.setId(rs.getInt("id"));
                 course.setName(rs.getString("name"));
                 course.setTeacherId(rs.getInt("teacher_id"));
@@ -141,14 +143,14 @@ public class CoursesDao {
                 course.setStart_time(rs.getTime("start_time"));
                 course.setEnd_time(rs.getTime("end_time"));
             } else {
-                LOGGER.error("No course found with id: "+course_id);
+                LOGGER.error("No course found with id: " + course_id);
             }
 
         }
         return course;
     }
 
-    public List<StudentSchedule> getStudentSchedule (int student_id) throws SQLException {
+    public List<StudentSchedule> getStudentSchedule(int student_id) throws SQLException {
         List<StudentSchedule> studentSchedule = new ArrayList<>();
         try (Connection conn = dataSource.getConnection()) {
             PreparedStatement statement = conn.prepareCall(GET_STUDENT_SCHEDULE);
